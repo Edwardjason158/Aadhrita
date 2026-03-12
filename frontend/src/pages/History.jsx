@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../App'
 import { healthAPI, analyticsAPI } from '../services/api'
 import { Download, Database, User } from 'lucide-react'
+import { useLanguage } from '../context/LanguageContext'
 
 export default function History() {
   const { user } = useAuth()
+  const { t } = useLanguage()
   const [loading, setLoading] = useState(true)
   const [records, setRecords] = useState([])
   const [datasetRecords, setDatasetRecords] = useState([])
@@ -59,23 +61,23 @@ export default function History() {
   }
 
   const tabs = [
-    { id: 'myrecords', label: 'My Records', icon: User, count: records.length },
-    { id: 'dataset', label: 'Dataset Records', icon: Database, count: datasetRecords.length },
+    { id: 'myrecords', label: t.history.myRecords, icon: User, count: records.length },
+    { id: 'dataset', label: t.history.dataset, icon: Database, count: datasetRecords.length },
   ]
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Health History</h1>
-          <p className="text-slate-500">View and export your past health records and dataset</p>
+          <h1 className="text-2xl font-bold text-slate-800">{t.history.title}</h1>
+          <p className="text-slate-500">{t.history.desc}</p>
         </div>
         <button
           onClick={exportData}
           className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors"
         >
           <Download className="h-4 w-4" />
-          Export CSV
+          {t.history.export}
         </button>
       </div>
 
@@ -111,7 +113,7 @@ export default function History() {
               <table className="w-full">
                 <thead className="bg-slate-50 border-b border-slate-200">
                   <tr>
-                    {['Date', 'Sleep', 'Steps', 'Heart Rate', 'Stress', 'Screen Time', 'Calories', 'Source'].map(h => (
+                    {[t.history.date, t.dashboard.sleep, t.dashboard.steps, t.dashboard.heartRate, t.dashboard.stress, t.dashboard.screenTime, t.dashboard.calories, t.history.source].map(h => (
                       <th key={h} className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">{h}</th>
                     ))}
                   </tr>
@@ -146,7 +148,7 @@ export default function History() {
               <table className="w-full">
                 <thead className="bg-slate-50 border-b border-slate-200">
                   <tr>
-                    {['Date', 'Sleep', 'Steps', 'Heart Rate', 'Stress', 'Screen Time', 'Calories Burned', 'Wellness Score'].map(h => (
+                    {[t.history.date, t.dashboard.sleep, t.dashboard.steps, t.dashboard.heartRate, t.dashboard.stress, t.dashboard.screenTime, t.dashboard.calories, t.dashboard.score].map(h => (
                       <th key={h} className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">{h}</th>
                     ))}
                   </tr>

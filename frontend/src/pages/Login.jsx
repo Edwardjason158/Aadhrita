@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom'
 import { Heart, ArrowRight } from 'lucide-react'
 import { useAuth } from '../App'
 import { authAPI } from '../services/api'
+import { useLanguage } from '../context/LanguageContext'
 
 export default function Login() {
   const [loading, setLoading] = useState(false)
   const { login } = useAuth()
   const navigate = useNavigate()
+  const { t } = useLanguage()
 
   const handleGoogleLogin = async () => {
     setLoading(true)
@@ -28,14 +30,14 @@ export default function Login() {
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <div className="flex items-center justify-center gap-3 mb-8">
             <Heart className="h-10 w-10 text-primary-600" />
-            <h1 className="text-3xl font-bold text-slate-800">Wellness</h1>
+            <h1 className="text-3xl font-bold text-slate-800">{t.login.title}</h1>
           </div>
 
           <h2 className="text-xl font-semibold text-slate-700 text-center mb-2">
-            Track Your Health Journey
+            {t.login.subtitle}
           </h2>
           <p className="text-slate-500 text-center mb-8">
-            Connect with Google Fit or add data manually to get personalized AI insights
+            {t.login.desc}
           </p>
 
           <button
@@ -61,7 +63,7 @@ export default function Login() {
                 d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
               />
             </svg>
-            {loading ? 'Connecting...' : 'Sign in with Google'}
+            {loading ? t.login.connecting : t.login.google}
           </button>
 
           <div className="mt-6 text-center">
@@ -81,13 +83,13 @@ export default function Login() {
               disabled={loading}
               className="text-primary-600 hover:text-primary-700 font-medium text-sm flex items-center justify-center gap-1 mx-auto disabled:opacity-50"
             >
-              Try Demo Mode <ArrowRight className="h-4 w-4" />
+              {t.login.demo} <ArrowRight className="h-4 w-4" />
             </button>
           </div>
         </div>
 
         <p className="text-center text-slate-500 text-sm mt-6">
-          By signing in, you agree to our Terms of Service and Privacy Policy
+          {t.login.footer}
         </p>
       </div>
     </div>

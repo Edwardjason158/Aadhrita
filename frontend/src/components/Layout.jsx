@@ -1,10 +1,12 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { Heart, LayoutDashboard, BarChart3, History, Settings, LogOut } from 'lucide-react'
+import { Heart, LayoutDashboard, BarChart3, History, Settings, LogOut, Brain } from 'lucide-react'
 import { useAuth } from '../App'
+import { useLanguage } from '../context/LanguageContext'
 
 export default function Layout() {
   const { logout } = useAuth()
   const navigate = useNavigate()
+  const { t } = useLanguage()
 
   const handleLogout = () => {
     logout()
@@ -12,10 +14,11 @@ export default function Layout() {
   }
 
   const navItems = [
-    { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
-    { to: '/analytics', icon: BarChart3, label: 'Analytics' },
-    { to: '/history', icon: History, label: 'History' },
-    { to: '/settings', icon: Settings, label: 'Settings' },
+    { to: '/', icon: LayoutDashboard, label: t.nav.dashboard },
+    { to: '/analytics', icon: BarChart3, label: t.nav.analytics },
+    { to: '/history', icon: History, label: t.nav.history },
+    { to: '/journal', icon: Brain, label: t.nav.journal },
+    { to: '/settings', icon: Settings, label: t.nav.settings },
   ]
 
   return (
@@ -26,7 +29,7 @@ export default function Layout() {
             <div className="flex items-center">
               <div className="flex items-center gap-2">
                 <Heart className="h-8 w-8 text-primary-600" />
-                <span className="text-xl font-bold text-slate-800">Wellness</span>
+                <span className="text-xl font-bold text-slate-800">{t.login.title}</span>
               </div>
             </div>
             <div className="flex items-center gap-4">
@@ -36,10 +39,9 @@ export default function Layout() {
                     key={item.to}
                     to={item.to}
                     className={({ isActive }) =>
-                      `flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        isActive
-                          ? 'bg-primary-50 text-primary-700'
-                          : 'text-slate-600 hover:bg-slate-50'
+                      `flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${isActive
+                        ? 'bg-primary-50 text-primary-700'
+                        : 'text-slate-600 hover:bg-slate-50'
                       }`
                     }
                     end={item.to === '/'}
@@ -54,7 +56,7 @@ export default function Layout() {
                 className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
               >
                 <LogOut className="h-4 w-4" />
-                <span className="hidden sm:inline">Logout</span>
+                <span className="hidden sm:inline">{t.nav.logout}</span>
               </button>
             </div>
           </div>

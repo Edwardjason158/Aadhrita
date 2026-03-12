@@ -1,4 +1,8 @@
+import { useLanguage } from '../context/LanguageContext'
+
 export default function WellnessScoreCard({ score, sleepScore, activityScore, heartRateScore, stressScore }) {
+  const { t } = useLanguage()
+
   const getScoreColor = (value) => {
     if (value >= 75) return '#22c55e'
     if (value >= 50) return '#eab308'
@@ -6,11 +10,11 @@ export default function WellnessScoreCard({ score, sleepScore, activityScore, he
   }
 
   const getScoreLabel = (value) => {
-    if (value >= 85) return 'Excellent'
-    if (value >= 75) return 'Good'
-    if (value >= 60) return 'Fair'
-    if (value >= 50) return 'Needs Improvement'
-    return 'Poor'
+    if (value >= 85) return t.dashboard.excellent
+    if (value >= 75) return t.dashboard.good
+    if (value >= 60) return t.dashboard.fair
+    if (value >= 50) return t.dashboard.needsImprovement
+    return t.dashboard.poor
   }
 
   const color = getScoreColor(score)
@@ -18,16 +22,16 @@ export default function WellnessScoreCard({ score, sleepScore, activityScore, he
   const strokeDashoffset = circumference - (score / 100) * circumference
 
   const categories = [
-    { label: 'Sleep', score: sleepScore, weight: '30%' },
-    { label: 'Activity', score: activityScore, weight: '25%' },
-    { label: 'Heart Rate', score: heartRateScore, weight: '25%' },
-    { label: 'Stress', score: stressScore, weight: '20%' },
+    { label: t.dashboard.sleep, score: sleepScore, weight: '30%' },
+    { label: t.dashboard.activity, score: activityScore, weight: '25%' },
+    { label: t.dashboard.heartRate, score: heartRateScore, weight: '25%' },
+    { label: t.dashboard.stress, score: stressScore, weight: '20%' },
   ]
 
   return (
     <div className="bg-white rounded-xl p-6 border border-slate-200">
-      <h2 className="text-lg font-semibold text-slate-800 mb-4">Wellness Score</h2>
-      
+      <h2 className="text-lg font-semibold text-slate-800 mb-4">{t.dashboard.score}</h2>
+
       <div className="flex items-center justify-center mb-6">
         <div className="relative w-40 h-40">
           <svg className="w-full h-full transform -rotate-90">

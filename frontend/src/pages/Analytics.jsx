@@ -3,9 +3,11 @@ import { useAuth } from '../App'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ScatterChart, Scatter } from 'recharts'
 import { healthAPI, scoreAPI, analyticsAPI } from '../services/api'
 import { Info, TrendingUp, TrendingDown, Activity } from 'lucide-react'
+import { useLanguage } from '../context/LanguageContext'
 
 export default function Analytics() {
   const { user } = useAuth()
+  const { t } = useLanguage()
   const [loading, setLoading] = useState(true)
   const [weekData, setWeekData] = useState([])
   const [scoreHistory, setScoreHistory] = useState([])
@@ -112,8 +114,8 @@ export default function Analytics() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Health Analytics</h1>
-          <p className="text-slate-500">Deep insights from your data using correlation analysis</p>
+          <h1 className="text-2xl font-bold text-slate-800">{t.analytics.title}</h1>
+          <p className="text-slate-500">{t.analytics.desc}</p>
         </div>
       </div>
 
@@ -121,7 +123,7 @@ export default function Analytics() {
         <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm transition-all hover:shadow-md h-full">
           <h2 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
             <Activity className="h-5 w-5 text-sky-500" />
-            Wellness Score Trend (Raw Data)
+            {t.analytics.scoreTrend}
           </h2>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -147,47 +149,47 @@ export default function Analytics() {
         </div>
 
         <CustomScatterPlot
-          title="Sleep vs Stress Impact"
+          title={t.analytics.sleepStress}
           data={fullDataset}
           xKey="sleep_hours"
           yKey="stress_level"
-          xLabel="Sleep"
-          yLabel="Stress"
+          xLabel={t.dashboard.sleep}
+          yLabel={t.dashboard.stress}
           color="#8b5cf6"
           xUnit="h"
           yUnit="/10"
         />
 
         <CustomScatterPlot
-          title="Steps vs Calories Burned"
+          title={t.analytics.stepsCalories}
           data={fullDataset}
           xKey="steps"
           yKey="calories_burned"
-          xLabel="Steps"
-          yLabel="Calories"
+          xLabel={t.dashboard.steps}
+          yLabel={t.dashboard.calories}
           color="#22c55e"
           yUnit=" kcal"
         />
 
         <CustomScatterPlot
-          title="Screen Time vs Stress"
+          title={t.analytics.screenStress}
           data={fullDataset}
           xKey="screen_time"
           yKey="stress_level"
-          xLabel="Screen Time"
-          yLabel="Stress"
+          xLabel={t.dashboard.screenTime}
+          yLabel={t.dashboard.stress}
           color="#f43f5e"
           xUnit="h"
           yUnit="/10"
         />
 
         <CustomScatterPlot
-          title="Sleep vs Wellness Score"
+          title={t.analytics.sleepWellness}
           data={fullDataset}
           xKey="sleep_hours"
           yKey="wellness_score"
-          xLabel="Sleep"
-          yLabel="Score"
+          xLabel={t.dashboard.sleep}
+          yLabel={t.dashboard.score}
           color="#0ea5e9"
           xUnit="h"
         />

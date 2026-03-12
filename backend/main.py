@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import logging
 
-from backend.routers import auth, health, insight, score, analytics
+from backend.routers import auth, health, insight, score, analytics, nlp
 from backend.utils.database import init_db
 from backend.services.scheduler_service import scheduler_service
 
@@ -46,6 +46,7 @@ app.include_router(health.router)
 app.include_router(insight.router)
 app.include_router(score.router)
 app.include_router(analytics.router)
+app.include_router(nlp.router)
 
 @app.get("/")
 async def root():

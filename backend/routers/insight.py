@@ -15,7 +15,7 @@ from backend.services.wellness_score_service import WellnessScoreService
 router = APIRouter(prefix="/insights", tags=["Insights"])
 
 @router.get("/daily", response_model=DailyInsightResponse)
-async def get_daily_insight(user_id: int, db: Session = Depends(get_db)):
+async def get_daily_insight(user_id: int, lang: str = "en", db: Session = Depends(get_db)):
     user = db.query(User).filter(User.id == user_id).first()
     
     if not user:
@@ -67,7 +67,7 @@ async def get_daily_insight(user_id: int, db: Session = Depends(get_db)):
         Insight.date >= today
     ).first()
     
-    if latest_insight:
+    if latest_insight and getattr(latest_insight, 'ai_model', '').endswith(f'|lang={lang}'):
         return DailyInsightResponse(
             insight=latest_insight.insight_text,
             suggestions=latest_insight.suggestions.split(", ") if latest_insight.suggestions else [],
@@ -77,14 +77,34 @@ async def get_daily_insight(user_id: int, db: Session = Depends(get_db)):
     
     # If health records exist but no insight, try to generate one
     from backend.ai.chains.insight_chain import generate_ai_insight
+
+    fallback_msgs = {
+        "en": {
+            "start": "Start tracking your health data to get personalized insights.",
+            "s1": "Connect Google Fit for automatic data sync",
+            "s2": "Log your daily sleep, stress, and activity"
+        },
+        "hi": {
+            "start": "व्यक्तिगत अंतर्दृष्टि पाने के लिए अपना स्वास्थ्य डेटा ट्रैक करना शुरू करें।",
+            "s1": "स्वचालित डेटा सिंक के लिए Google Fit से कनेक्ट करें",
+            "s2": "अपनी दैनिक नींद, तनाव और गतिविधि लॉग करें"
+        },
+        "te": {
+            "start": "వ్యక్తిగతీకరించిన అంతర్దృష్టులు పొందడానికి మీ ఆరోగ్య డేటాను ట్రాక్ చేయడం ప్రారంభించండి.",
+            "s1": "స్వయంచాలక డేటా సమకాలీకరణ కోసం Google Fitని కనెక్ట్ చేయండి",
+            "s2": "మీ రోజువారీ నిద్ర, ఒత్తిడి మరియు కార్యకలాపాలను లాగ్ చేయండి"
+        }
+    }
+    fb = fallback_msgs.get(lang, fallback_msgs["en"])
+
     try:
-        ai_insight = generate_ai_insight(user_id, "daily", db)
+        ai_insight = generate_ai_insight(user_id, "daily", db, lang=lang)
         
         new_insight = Insight(
             user_id=user_id,
             insight_text=ai_insight.get("insight", ""),
             suggestions=ai_insight.get("suggestions", ""),
-            ai_model=ai_insight.get("model", "mistralai/mistral-7b-instruct"),
+            ai_model=f"{ai_insight.get('model', 'mistralai/mistral-7b-instruct')}|lang={lang}",
             insight_type="daily"
         )
         
@@ -101,11 +121,8 @@ async def get_daily_insight(user_id: int, db: Session = Depends(get_db)):
     except Exception as e:
         print(f"Failed to auto-generate insight: {e}")
         return DailyInsightResponse(
-            insight="Start tracking your health data to get personalized insights.",
-            suggestions=[
-                "Connect Google Fit for automatic data sync",
-                "Log your daily sleep, stress, and activity"
-            ],
+            insight=fb["start"],
+            suggestions=[fb["s1"], fb["s2"]],
             patterns=patterns[:3],
             wellness_score=today_score
         )
@@ -161,7 +178,7 @@ async def get_patterns(user_id: int, limit: int = 10, db: Session = Depends(get_
     return patterns
 
 @router.get("/alerts")
-async def get_alerts(user_id: int, db: Session = Depends(get_db)):
+async def get_alerts(user_id: int, lang: str = "en", db: Session = Depends(get_db)):
     week_ago = datetime.utcnow() - timedelta(days=7)
     today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
     tomorrow = today + timedelta(days=1)
@@ -191,11 +208,39 @@ async def get_alerts(user_id: int, db: Session = Depends(get_db)):
 
         alert_id = 9000
 
+        # Multilingual alert messages
+        def alert_msg(key, **kwargs):
+            msgs = {
+                "en": {
+                    "low_sleep": f"You only slept {kwargs.get('hours')} hours today. Adults need 7–9 hours for optimal health.",
+                    "high_stress": f"Your stress level is {kwargs.get('level')}/10. Try breathing exercises or a short walk.",
+                    "low_activity": f"You've only taken {int(kwargs.get('steps', 0)):,} steps today. Aim for at least 8,000 steps daily.",
+                    "elevated_heart_rate": f"Your resting heart rate is {kwargs.get('hr')} bpm, above the normal range of 60–100 bpm.",
+                    "high_screen_time": f"You've had {kwargs.get('hours')} hours of screen time today. Take regular breaks to protect your eyes."
+                },
+                "hi": {
+                    "low_sleep": f"आज आप केवल {kwargs.get('hours')} घंटे सोए। वयस्कों को बेहतर स्वास्थ्य के लिए 7–9 घंटे की नींद चाहिए।",
+                    "high_stress": f"आपका तनाव स्तर {kwargs.get('level')}/10 है। सांस लेने के व्यायाम या छोटी सैर करें।",
+                    "low_activity": f"आपने आज केवल {int(kwargs.get('steps', 0)):,} कदम चले हैं। प्रतिदिन कम से कम 8,000 कदम चलें।",
+                    "elevated_heart_rate": f"आपकी हृदय गति {kwargs.get('hr')} bpm है, जो 60–100 bpm की सामान्य सीमा से अधिक है।",
+                    "high_screen_time": f"आज आपने {kwargs.get('hours')} घंटे स्क्रीन देखी। अपनी आँखों को बचाने के लिए नियमित विराम लें।"
+                },
+                "te": {
+                    "low_sleep": f"మీరు ఈరోజు కేవలం {kwargs.get('hours')} గంటలు మాత్రమే నిద్రపోయారు. పెద్దలకు 7–9 గంటల నిద్ర అవసరం.",
+                    "high_stress": f"మీ ఒత్తిడి స్థాయి {kwargs.get('level')}/10. శ్వాస వ్యాయామాలు లేదా చిన్న నడకను ప్రయత్నించండి.",
+                    "low_activity": f"మీరు ఈరోజు కేవలం {int(kwargs.get('steps', 0)):,} అడుగులు మాత్రమే వేశారు. రోజుకు కనీసం 8,000 అడుగులు వేయండి.",
+                    "elevated_heart_rate": f"మీ విశ్రాంతి హృదయ స్పందన రేటు {kwargs.get('hr')} bpm, ఇది 60–100 bpm పరిధి కంటే ఎక్కువ.",
+                    "high_screen_time": f"మీరు ఈరోజు {kwargs.get('hours')} గంటలు స్క్రీన్ సమయం గడిపారు. మీ కళ్ళను రక్షించుకోవడానికి క్రమం తప్పకుండా విరామాలు తీసుకోండి."
+                }
+            }
+            lang_msgs = msgs.get(lang, msgs["en"])
+            return lang_msgs.get(key, "")
+
         if agg["sleep_hours"] is not None and agg["sleep_hours"] < 6:
             dynamic_alerts.append({
                 "id": alert_id, "user_id": user_id,
                 "pattern_type": "low_sleep",
-                "description": f"You only slept {agg['sleep_hours']} hours today. Adults need 7–9 hours for optimal health.",
+                "description": alert_msg("low_sleep", hours=agg['sleep_hours']),
                 "severity": "high" if agg["sleep_hours"] < 5 else "medium",
                 "detected_at": datetime.utcnow()
             })
@@ -205,7 +250,7 @@ async def get_alerts(user_id: int, db: Session = Depends(get_db)):
             dynamic_alerts.append({
                 "id": alert_id, "user_id": user_id,
                 "pattern_type": "high_stress",
-                "description": f"Your stress level is {agg['stress_level']}/10. Try breathing exercises or a short walk.",
+                "description": alert_msg("high_stress", level=agg['stress_level']),
                 "severity": "critical" if agg["stress_level"] >= 9 else "high",
                 "detected_at": datetime.utcnow()
             })
@@ -215,7 +260,7 @@ async def get_alerts(user_id: int, db: Session = Depends(get_db)):
             dynamic_alerts.append({
                 "id": alert_id, "user_id": user_id,
                 "pattern_type": "low_activity",
-                "description": f"You've only taken {int(agg['steps']):,} steps today. Aim for at least 8,000 steps daily.",
+                "description": alert_msg("low_activity", steps=agg['steps']),
                 "severity": "medium",
                 "detected_at": datetime.utcnow()
             })
@@ -225,7 +270,7 @@ async def get_alerts(user_id: int, db: Session = Depends(get_db)):
             dynamic_alerts.append({
                 "id": alert_id, "user_id": user_id,
                 "pattern_type": "elevated_heart_rate",
-                "description": f"Your resting heart rate is {agg['heart_rate']} bpm, above the normal range of 60–100 bpm.",
+                "description": alert_msg("elevated_heart_rate", hr=agg['heart_rate']),
                 "severity": "high",
                 "detected_at": datetime.utcnow()
             })
@@ -235,7 +280,7 @@ async def get_alerts(user_id: int, db: Session = Depends(get_db)):
             dynamic_alerts.append({
                 "id": alert_id, "user_id": user_id,
                 "pattern_type": "high_screen_time",
-                "description": f"You've had {agg['screen_time']} hours of screen time today. Take regular breaks to protect your eyes.",
+                "description": alert_msg("high_screen_time", hours=agg['screen_time']),
                 "severity": "medium",
                 "detected_at": datetime.utcnow()
             })

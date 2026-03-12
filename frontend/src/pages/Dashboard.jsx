@@ -7,9 +7,11 @@ import PatternAlert from '../components/PatternAlert'
 import AddHealthDataModal from '../components/AddHealthDataModal'
 import { healthAPI, scoreAPI, insightAPI } from '../services/api'
 import { RefreshCw, Plus } from 'lucide-react'
+import { useLanguage } from '../context/LanguageContext'
 
 export default function Dashboard() {
   const { user } = useAuth()
+  const { t, language } = useLanguage()
   const [loading, setLoading] = useState(true)
   const [showAddModal, setShowAddModal] = useState(false)
   const [score, setScore] = useState(null)
@@ -20,7 +22,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     loadDashboardData()
-  }, [user])
+  }, [user, language])
 
   const loadDashboardData = async () => {
     if (!user) return
@@ -29,8 +31,8 @@ export default function Dashboard() {
       const [scoreRes, healthRes, insightRes, patternsRes] = await Promise.all([
         scoreAPI.getTodayScore(user.id).catch(() => null),
         healthAPI.getTodayHealth(user.id).catch(() => ({ records: [] })),
-        insightAPI.getDailyInsight(user.id).catch(() => null),
-        insightAPI.getAlerts(user.id).catch(() => [])
+        insightAPI.getDailyInsight(user.id, language).catch(() => null),
+        insightAPI.getAlerts(user.id, language).catch(() => [])
       ])
       setScore(scoreRes)
       setTodayHealth(healthRes.records?.[0] || null)
@@ -70,20 +72,20 @@ export default function Dashboard() {
   }
 
   const metrics = [
-    { label: 'Sleep', value: todayHealth?.sleep_hours, unit: 'hrs', icon: '🌙', good: todayHealth?.sleep_hours >= 7 },
-    { label: 'Steps', value: todayHealth?.steps, unit: 'steps', icon: '👟', good: todayHealth?.steps >= 5000 },
-    { label: 'Heart Rate', value: todayHealth?.heart_rate, unit: 'bpm', icon: '❤️', good: todayHealth?.heart_rate < 90 },
-    { label: 'Stress', value: todayHealth?.stress_level, unit: '/10', icon: '🧘', good: todayHealth?.stress_level <= 5 },
-    { label: 'Screen Time', value: todayHealth?.screen_time, unit: 'hrs', icon: '📱', good: todayHealth?.screen_time <= 4 },
-    { label: 'Calories', value: todayHealth?.calories, unit: 'kcal', icon: '🔥', good: todayHealth?.calories >= 1500 },
+    { label: t.dashboard.sleep, value: todayHealth?.sleep_hours, unit: 'hrs', icon: '🌙', good: todayHealth?.sleep_hours >= 7 },
+    { label: t.dashboard.steps, value: todayHealth?.steps, unit: 'steps', icon: '👟', good: todayHealth?.steps >= 5000 },
+    { label: t.dashboard.heartRate, value: todayHealth?.heart_rate, unit: 'bpm', icon: '❤️', good: todayHealth?.heart_rate < 90 },
+    { label: t.dashboard.stress, value: todayHealth?.stress_level, unit: '/10', icon: '🧘', good: todayHealth?.stress_level <= 5 },
+    { label: t.dashboard.screenTime, value: todayHealth?.screen_time, unit: 'hrs', icon: '📱', good: todayHealth?.screen_time <= 4 },
+    { label: t.dashboard.calories, value: todayHealth?.calories, unit: 'kcal', icon: '🔥', good: todayHealth?.calories >= 1500 },
   ]
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Welcome back, {user?.name || 'User'}!</h1>
-          <p className="text-slate-500">Here's your health overview for today</p>
+          <h1 className="text-2xl font-bold text-slate-800">{t.dashboard.welcome}, {user?.name || 'User'}!</h1>
+          <p className="text-slate-500">{t.dashboard.overview}</p>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -92,14 +94,14 @@ export default function Dashboard() {
             className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-50"
           >
             <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-            Sync Fit
+            {t.dashboard.sync}
           </button>
           <button
             onClick={() => setShowAddModal(true)}
             className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors"
           >
             <Plus className="h-4 w-4" />
-            Add Data
+            {t.dashboard.addData}
           </button>
         </div>
       </div>
@@ -141,7 +143,7 @@ export default function Dashboard() {
 
         <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <h2 className="text-lg font-semibold text-slate-800">Health Alerts</h2>
+            <h2 className="text-lg font-semibold text-slate-800">{t.dashboard.alerts}</h2>
             {patterns.length > 0 && (
               <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-orange-100 text-orange-700">
                 {patterns.length}
@@ -162,8 +164,8 @@ export default function Dashboard() {
           ) : (
             <div className="bg-green-50 border border-green-100 rounded-xl p-6 text-center">
               <div className="text-3xl mb-2">✅</div>
-              <p className="text-green-700 font-semibold text-sm">All Clear!</p>
-              <p className="text-green-600 text-xs mt-1">No health alerts today. Keep it up!</p>
+              <p className="text-green-700 font-semibold text-sm">{t.dashboard.allClear}</p>
+              <p className="text-green-600 text-xs mt-1">{t.dashboard.allClearDesc}</p>
             </div>
           )}
         </div>

@@ -59,11 +59,11 @@ class InsightChain:
             )
         return self.memory[user_id]
     
-    def generate_daily_insight(self, health_data: Dict[str, Any], patterns: List[Dict]) -> Dict[str, Any]:
+    def generate_daily_insight(self, health_data: Dict[str, Any], patterns: List[Dict], lang: str = "en") -> Dict[str, Any]:
         if not self.llm:
-            return self._fallback_insight(health_data, patterns)
+            return self._fallback_insight(health_data, patterns, lang)
         
-        prompt = self._build_daily_prompt(health_data, patterns)
+        prompt = self._build_daily_prompt(health_data, patterns, lang)
         
         try:
             response = self.llm(prompt)
@@ -98,13 +98,20 @@ class InsightChain:
             print(f"Error generating pattern insight: {e}")
             return pattern.get("description", "Pattern detected in your health data.")
     
-    def _build_daily_prompt(self, health_data: Dict, patterns: List[Dict]) -> str:
+    def _build_daily_prompt(self, health_data: Dict, patterns: List[Dict], lang: str = "en") -> str:
         sleep = health_data.get("sleep_hours", "N/A")
         steps = health_data.get("steps", "N/A")
         heart_rate = health_data.get("heart_rate", "N/A")
         stress = health_data.get("stress_level", "N/A")
         screen_time = health_data.get("screen_time", "N/A")
         calories = health_data.get("calories", "N/A")
+        
+        language_map = {
+            "en": "English",
+            "hi": "Hindi",
+            "te": "Telugu"
+        }
+        target_lang = language_map.get(lang, "English")
         
         pattern_text = "\n".join([f"- {p.get('pattern_type')}: {p.get('description')}" for p in patterns]) if patterns else "No patterns detected"
         
@@ -124,13 +131,15 @@ Detected Patterns:
 Generate a friendly, caring, and simple insight in 3-4 sentences (under 150 words).
 Then provide exactly 3 specific actionable suggestions that the user can implement today.
 
+IMPORTANT: You MUST generate the entire response (Insight and Suggestions) in {target_lang}.
+
 Format your response as:
-Insight: [your 3-4 sentence insight]
+Insight: [your 3-4 sentence insight in {target_lang}]
 
 Suggestions:
-1. [suggestion 1]
-2. [suggestion 2]
-3. [suggestion 3]
+1. [suggestion 1 in {target_lang}]
+2. [suggestion 2 in {target_lang}]
+3. [suggestion 3 in {target_lang}]
 """
         return prompt
     
@@ -209,11 +218,12 @@ Keep the explanation under 100 words. Use a caring, supportive tone.
             insight_text = response[:200]
         
         if not suggestions:
-            suggestions = [
-                "Track your sleep consistently",
-                "Aim for 10,000 steps daily",
-                "Practice stress management techniques"
-            ]
+            default_suggestions = {
+                "en": ["Track your sleep consistently", "Aim for 10,000 steps daily", "Practice stress management techniques"],
+                "hi": ["अपनी नींद को लगातार ट्रैक करें", "प्रतिदिन 10,000 कदम चलने का लक्ष्य रखें", "तनाव प्रबंधन तकनीकों का अभ्यास करें"],
+                "te": ["మీ నిద్రను క్రమం తప్పకుండా ట్రాక్ చేయండి", "రోజుకు 10,000 అడుగులు వేయాలని లక్ష్యంగా పెట్టుకోండి", "ఒత్తిడి నిర్వహణ పద్ధతులను ప్రాక్టీస్ చేయండి"]
+            }
+            suggestions = default_suggestions.get("en", default_suggestions["en"])
         
         return {
             "insight": insight_text,
@@ -228,7 +238,7 @@ Keep the explanation under 100 words. Use a caring, supportive tone.
             "model": self.primary_model
         }
     
-    def _fallback_insight(self, health_data: Dict, patterns: List[Dict]) -> Dict[str, Any]:
+    def _fallback_insight(self, health_data: Dict, patterns: List[Dict], lang: str = "en") -> Dict[str, Any]:
         suggestions = []
         insights = []
         
@@ -237,43 +247,70 @@ Keep the explanation under 100 words. Use a caring, supportive tone.
         stress = health_data.get("stress_level")
         heart_rate = health_data.get("heart_rate")
         
+        # Simple translations for fallback
+        msgs = {
+            "en": {
+                "sleep_low": f"Your sleep ({sleep}h) is below the recommended 7-8 hours.",
+                "sleep_high": f"You got plenty of sleep ({sleep}h) today!",
+                "sleep_ok": f"Great job getting {sleep} hours of sleep!",
+                "steps_low": f"Your activity level is low with {steps} steps.",
+                "steps_high": f"Excellent activity with {steps} steps today!",
+                "stress_high": "Your stress levels are quite high today.",
+                "hr_high": f"Your heart rate is a bit high ({heart_rate} bpm).",
+                "welcome": "Welcome to your wellness dashboard!",
+                "s1": "Maintain your current healthy habits",
+                "s2": "Continue tracking your health data",
+                "s3": "Stay consistent with your routine"
+            },
+            "hi": {
+                "sleep_low": f"आज आपकी नींद ({sleep} घंटे) औसत से कम रही।",
+                "sleep_high": f"आज आपको भरपूर नींद ({sleep} घंटे) मिली!",
+                "sleep_ok": f"अच्छी नींद ({sleep} घंटे) ली!",
+                "steps_low": f"आपके कदम ({steps}) कम रहे।",
+                "steps_high": f"आज आपने ({steps} कदम) बहुत अच्छा किया!",
+                "stress_high": "आज आपका तनाव स्तर काफी अधिक है।",
+                "hr_high": f"आपकी हृदय गति थोड़ी अधिक ({heart_rate} bpm) है।",
+                "welcome": "आपके वेलनेस डैशबोर्ड में स्वागत है!",
+                "s1": "अपनी वर्तमान स्वस्थ आदतों को बनाए रखें",
+                "s2": "अपने स्वास्थ्य डेटा को ट्रैक करना जारी रखें",
+                "s3": "अपनी दिनचर्या में निरंतर बने रहें"
+            },
+            "te": {
+                "sleep_low": f"మీ నిద్ర ({sleep} గంటలు) తక్కువగా ఉంది.",
+                "sleep_high": f"ఈరోజు మీకు తగినంత నిద్ర ({sleep} గంటలు) లభించింది!",
+                "sleep_ok": f"చక్కటి నిద్ర ({sleep} గంటలు) పోయారు!",
+                "steps_low": f"మీరు తక్కువ అడుగులు ({steps}) వేశారు.",
+                "steps_high": f"ఈరోజు మీరు అద్భుతంగా ({steps} అడుగులు) వేశారు!",
+                "stress_high": "ఈరోజు మీ ఒత్తిడి స్థాయిలు ఎక్కువగా ఉన్నాయి.",
+                "hr_high": f"మీ హృదయ స్పందన రేటు కొంత ఎక్కువగా ({heart_rate} bpm) ఉంది.",
+                "welcome": "మీ వెల్‌నెస్ డ్యాష్‌బోర్డ్‌కు స్వాగతం!",
+                "s1": "మీ ప్రస్తుత ఆరోగ్యకరమైన అలవాట్లను కొనసాగించండి",
+                "s2": "మీ ఆరోగ్య డేటాను ట్రాక్ చేయడం కొనసాగించండి",
+                "s3": "మీ దినచర్యలో స్థిరంగా ఉండండి"
+            }
+        }
+        
+        m = msgs.get(lang, msgs["en"])
+        
         if sleep:
-            if sleep < 6:
-                insights.append(f"Your sleep ({sleep}h) is below the recommended 7-8 hours, which might affect your energy.")
-                suggestions.append("Try to get more sleep - aim for 7-8 hours")
-            elif sleep > 9:
-                insights.append(f"You got plenty of sleep ({sleep}h) today! Make sure you stay active to balance it out.")
-                suggestions.append("Keep active to balance your long rest")
-            else:
-                insights.append(f"Great job getting {sleep} hours of sleep!")
+            if sleep < 6: insights.append(m["sleep_low"])
+            elif sleep > 9: insights.append(m["sleep_high"])
+            else: insights.append(m["sleep_ok"])
         
         if steps:
-            if steps < 5000:
-                insights.append(f"Your activity level is low with {steps} steps.")
-                suggestions.append("Increase your daily steps - try a short walk")
-            elif steps > 10000:
-                insights.append(f"Excellent activity with {steps} steps today!")
-                suggestions.append("Keep up the high activity level!")
+            if steps < 5000: insights.append(m["steps_low"])
+            elif steps > 10000: insights.append(m["steps_high"])
         
-        if stress and stress > 7:
-            insights.append("Your stress levels are quite high today.")
-            suggestions.append("Consider stress management techniques like meditation")
-        
-        if heart_rate and heart_rate > 100:
-            insights.append(f"Your heart rate is a bit high ({heart_rate} bpm).")
-            suggestions.append("Take some time to rest and breathe deeply")
+        if stress and stress > 7: insights.append(m["stress_high"])
+        if heart_rate and heart_rate > 100: insights.append(m["hr_high"])
         
         if not insights:
-            insight = "Welcome to your wellness dashboard! Start tracking more data to see deeper insights."
+            insight = m["welcome"]
         else:
-            insight = " ".join(insights[:2]) # Use top 2 insights
+            insight = " ".join(insights[:2])
             
         if not suggestions:
-            suggestions = [
-                "Maintain your current healthy habits",
-                "Continue tracking your health data",
-                "Stay consistent with your routine"
-            ]
+            suggestions = [m["s1"], m["s2"], m["s3"]]
         
         return {
             "insight": insight,
@@ -291,7 +328,7 @@ Keep the explanation under 100 words. Use a caring, supportive tone.
 
 insight_chain = InsightChain()
 
-def generate_ai_insight(user_id: int, insight_type: str, db) -> Dict[str, Any]:
+def generate_ai_insight(user_id: int, insight_type: str, db, lang: str = "en") -> Dict[str, Any]:
     from backend.models.models import HealthRecord, Pattern
     from datetime import datetime, timedelta
     
@@ -329,6 +366,6 @@ def generate_ai_insight(user_id: int, insight_type: str, db) -> Dict[str, Any]:
             
             pattern_list = [{"pattern_type": p.pattern_type, "description": p.description} for p in patterns]
             
-            return insight_chain.generate_daily_insight(health_data, pattern_list)
+            return insight_chain.generate_daily_insight(health_data, pattern_list, lang)
     
-    return insight_chain._fallback_insight({}, [])
+    return insight_chain._fallback_insight({}, [], lang)

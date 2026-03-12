@@ -79,8 +79,8 @@ export const scoreAPI = {
 }
 
 export const insightAPI = {
-  getDailyInsight: async (userId) => {
-    const response = await api.get('/insights/daily', { params: { user_id: userId } })
+  getDailyInsight: async (userId, lang = 'en') => {
+    const response = await api.get('/insights/daily', { params: { user_id: userId, lang } })
     return response.data
   },
   getWeeklyInsight: async (userId) => {
@@ -91,8 +91,8 @@ export const insightAPI = {
     const response = await api.get('/insights/patterns', { params: { user_id: userId, limit } })
     return response.data
   },
-  getAlerts: async (userId) => {
-    const response = await api.get('/insights/alerts', { params: { user_id: userId } })
+  getAlerts: async (userId, lang = 'en') => {
+    const response = await api.get('/insights/alerts', { params: { user_id: userId, lang } })
     return response.data
   },
 }
@@ -104,6 +104,13 @@ export const analyticsAPI = {
   },
   getDataset: async () => {
     const response = await api.get('/analytics/dataset')
+    return response.data
+  }
+}
+
+export const nlpAPI = {
+  analyzeJournal: async (text) => {
+    const response = await api.post('/nlp/analyze', { text })
     return response.data
   }
 }
