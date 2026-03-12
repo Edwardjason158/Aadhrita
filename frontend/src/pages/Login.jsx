@@ -76,6 +76,7 @@ export default function Login() {
                   navigate('/')
                 } catch (err) {
                   console.error('Failed to login as demo user:', err)
+                  alert(`Demo Login Failed: ${err.message}. \n\nCheck if your backend is running at ${import.meta.env.VITE_API_URL || 'http://localhost:8000'}`)
                 } finally {
                   setLoading(false)
                 }
