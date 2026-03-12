@@ -160,17 +160,107 @@ async def get_patterns(user_id: int, limit: int = 10, db: Session = Depends(get_
     
     return patterns
 
-@router.get("/alerts", response_model=List[PatternResponse])
+@router.get("/alerts")
 async def get_alerts(user_id: int, db: Session = Depends(get_db)):
     week_ago = datetime.utcnow() - timedelta(days=7)
-    
-    alerts = db.query(Pattern).filter(
+    today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    tomorrow = today + timedelta(days=1)
+
+    # Fetch today's health records for real-time rule-based alerts
+    today_records = db.query(HealthRecord).filter(
+        HealthRecord.user_id == user_id,
+        HealthRecord.date >= today,
+        HealthRecord.date < tomorrow
+    ).all()
+
+    dynamic_alerts = []
+
+    if today_records:
+        # Aggregate all of today's records (same logic as /health/today)
+        agg = {
+            "sleep_hours": None, "steps": None, "heart_rate": None,
+            "stress_level": None, "screen_time": None, "calories": None
+        }
+        for rec in today_records:
+            if rec.sleep_hours  is not None: agg["sleep_hours"]  = rec.sleep_hours
+            if rec.steps        is not None: agg["steps"]        = rec.steps
+            if rec.heart_rate   is not None: agg["heart_rate"]   = rec.heart_rate
+            if rec.stress_level is not None: agg["stress_level"] = rec.stress_level
+            if rec.screen_time  is not None: agg["screen_time"]  = rec.screen_time
+            if rec.calories     is not None: agg["calories"]     = rec.calories
+
+        alert_id = 9000
+
+        if agg["sleep_hours"] is not None and agg["sleep_hours"] < 6:
+            dynamic_alerts.append({
+                "id": alert_id, "user_id": user_id,
+                "pattern_type": "low_sleep",
+                "description": f"You only slept {agg['sleep_hours']} hours today. Adults need 7–9 hours for optimal health.",
+                "severity": "high" if agg["sleep_hours"] < 5 else "medium",
+                "detected_at": datetime.utcnow()
+            })
+            alert_id += 1
+
+        if agg["stress_level"] is not None and agg["stress_level"] >= 7:
+            dynamic_alerts.append({
+                "id": alert_id, "user_id": user_id,
+                "pattern_type": "high_stress",
+                "description": f"Your stress level is {agg['stress_level']}/10. Try breathing exercises or a short walk.",
+                "severity": "critical" if agg["stress_level"] >= 9 else "high",
+                "detected_at": datetime.utcnow()
+            })
+            alert_id += 1
+
+        if agg["steps"] is not None and agg["steps"] < 4000:
+            dynamic_alerts.append({
+                "id": alert_id, "user_id": user_id,
+                "pattern_type": "low_activity",
+                "description": f"You've only taken {int(agg['steps']):,} steps today. Aim for at least 8,000 steps daily.",
+                "severity": "medium",
+                "detected_at": datetime.utcnow()
+            })
+            alert_id += 1
+
+        if agg["heart_rate"] is not None and agg["heart_rate"] > 100:
+            dynamic_alerts.append({
+                "id": alert_id, "user_id": user_id,
+                "pattern_type": "elevated_heart_rate",
+                "description": f"Your resting heart rate is {agg['heart_rate']} bpm, above the normal range of 60–100 bpm.",
+                "severity": "high",
+                "detected_at": datetime.utcnow()
+            })
+            alert_id += 1
+
+        if agg["screen_time"] is not None and agg["screen_time"] > 6:
+            dynamic_alerts.append({
+                "id": alert_id, "user_id": user_id,
+                "pattern_type": "high_screen_time",
+                "description": f"You've had {agg['screen_time']} hours of screen time today. Take regular breaks to protect your eyes.",
+                "severity": "medium",
+                "detected_at": datetime.utcnow()
+            })
+            alert_id += 1
+
+    # Also include any DB-stored high severity patterns from past week
+    db_alerts = db.query(Pattern).filter(
         Pattern.user_id == user_id,
         Pattern.detected_at >= week_ago,
         Pattern.severity.in_(["high", "critical"])
     ).order_by(Pattern.detected_at.desc()).all()
-    
-    return alerts
+
+    db_alert_dicts = [
+        {
+            "id": p.id, "user_id": p.user_id,
+            "pattern_type": p.pattern_type,
+            "description": p.description,
+            "severity": p.severity,
+            "detected_at": p.detected_at
+        }
+        for p in db_alerts
+    ]
+
+    return dynamic_alerts + db_alert_dicts
+
 
 @router.post("/generate")
 async def generate_insight(user_id: int, insight_type: str = "daily", db: Session = Depends(get_db)):

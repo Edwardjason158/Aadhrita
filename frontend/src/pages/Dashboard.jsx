@@ -35,7 +35,7 @@ export default function Dashboard() {
       setScore(scoreRes)
       setTodayHealth(healthRes.records?.[0] || null)
       setInsight(insightRes)
-      setPatterns(patternsRes)
+      setPatterns(Array.isArray(patternsRes) ? patternsRes : [])
     } catch (error) {
       console.error('Failed to load dashboard data:', error)
     } finally {
@@ -140,19 +140,30 @@ export default function Dashboard() {
         )}
 
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-slate-800">Health Alerts</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-semibold text-slate-800">Health Alerts</h2>
+            {patterns.length > 0 && (
+              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-orange-100 text-orange-700">
+                {patterns.length}
+              </span>
+            )}
+          </div>
           {patterns.length > 0 ? (
-            patterns.slice(0, 3).map((pattern) => (
-              <PatternAlert
-                key={pattern.id}
-                type={pattern.pattern_type}
-                description={pattern.description}
-                severity={pattern.severity}
-              />
-            ))
+            <div className="space-y-3">
+              {patterns.slice(0, 5).map((pattern, idx) => (
+                <PatternAlert
+                  key={pattern.id ?? idx}
+                  type={pattern.pattern_type}
+                  description={pattern.description}
+                  severity={pattern.severity}
+                />
+              ))}
+            </div>
           ) : (
-            <div className="bg-white rounded-xl p-6 border border-slate-200">
-              <p className="text-slate-500 text-center">No health alerts. Great job!</p>
+            <div className="bg-green-50 border border-green-100 rounded-xl p-6 text-center">
+              <div className="text-3xl mb-2">✅</div>
+              <p className="text-green-700 font-semibold text-sm">All Clear!</p>
+              <p className="text-green-600 text-xs mt-1">No health alerts today. Keep it up!</p>
             </div>
           )}
         </div>
@@ -163,6 +174,8 @@ export default function Dashboard() {
           onClose={() => setShowAddModal(false)}
           onSuccess={() => {
             setShowAddModal(false)
+            setInsight(null)
+            setPatterns([])
             loadDashboardData()
           }}
         />

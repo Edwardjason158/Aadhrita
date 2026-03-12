@@ -97,4 +97,15 @@ export const insightAPI = {
   },
 }
 
+export const analyticsAPI = {
+  getCorrelation: async () => {
+    const response = await api.get('/analytics/correlation')
+    return response.data
+  },
+  getDataset: async () => {
+    const response = await api.get('/analytics/dataset')
+    return response.data
+  }
+}
+
 export default api
