@@ -38,6 +38,7 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",
         "http://localhost:5173",
+        "https://wellness-dashboard-six.vercel.app", # Add your specific Vercel URL here
     ],
     allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
