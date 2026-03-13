@@ -1,67 +1,77 @@
-import torch
-from transformers import AutoModelForSequenceClassification, AutoTokenizer, pipeline
-import numpy as np
+import os
+import sys
+import json
+import requests
 
-# We'll use a multilingual model that works well with Indic languages 
-# since IndicBERT is often used as a base for these tasks.
-# l3cube-pune/indic-sentiment is a good specific one if we want high accuracy for Hindi/Telugu.
-# But since user specifically asked for ai4bharat IndicBERT, we will use it
-# or a model that is heavily based on it.
-# Actually, ai4bharat/indic-bert is an MLM. 
-# For sentiment, we can use a model like 'l3cube-pune/indic-sentiment-bert' (if it exists)
-# Or use a general multilingual sentiment model which supports these.
-
-MODEL_NAME = "l3cube-pune/indic-sentiment-bert" # This is often fine-tuned on top of IndicBERT/mBERT
-# If this fails, we fall back to a more general one.
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from backend.config import OPENROUTER_API_KEY, OPENROUTER_BASE_URL, PRIMARY_MODEL
 
 class IndicNLPService:
     def __init__(self):
-        self.sentiment_pipeline = None
-        self.tokenizer = None
-
-    def _load_models(self):
-        if self.sentiment_pipeline is not None:
-            return
-            
-        try:
-            print("Loading Indic NLP models...")
-            # Using a very reliable multilingual sentiment model as primary
-            # It supports Hindi, Telugu, and English out of the box.
-            self.sentiment_pipeline = pipeline(
-                "sentiment-analysis", 
-                model="cardiffnlp/twitter-xlm-roberta-base-sentiment",
-                device=-1 # Use CPU
-            )
-        except Exception as e:
-            print(f"Error loading multilingual models: {e}")
-            self.sentiment_pipeline = "FAILED"
+        self.api_key = OPENROUTER_API_KEY
+        self.base_url = OPENROUTER_BASE_URL
+        self.model = PRIMARY_MODEL
 
     def analyze_text(self, text: str):
-        self._load_models()
+        if not self.api_key:
+            return self._fallback_analyze(text)
+            
+        system_prompt = """You are an AI wellness journal analyzer. Analyze the user's journal entry.
+The entry could be in English, Hindi, or Telugu.
+
+Respond ONLY with a valid JSON in the exact structure below, no markdown, no other text:
+{
+  "sentiment": "Positive 😊" | "Negative 😔" | "Neutral 😐",
+  "confidence": 0.95
+}
+"""
         
-        if self.sentiment_pipeline == "FAILED":
-            return {"sentiment": "Neutral 😐", "confidence": 0.0, "raw_label": "fallback"}
-            
         try:
-            result = self.sentiment_pipeline(text)[0]
-            label = result['label'].lower()
-            score = result['score']
-            
-            # Cardiff model uses 'negative', 'neutral', 'positive'
-            sentiment = "Neutral 😐"
-            if "positive" in label:
-                sentiment = "Positive 😊"
-            elif "negative" in label:
-                sentiment = "Negative 😔"
-                
-            return {
-                "sentiment": sentiment,
-                "confidence": round(score, 4),
-                "raw_label": label
+            headers = {
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json"
             }
+            payload = {
+                "model": self.model,
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": text}
+                ],
+                "response_format": {"type": "json_object"}
+            }
+            response = requests.post(f"{self.base_url}/chat/completions", headers=headers, json=payload, timeout=15)
+            
+            if response.status_code == 200:
+                result = response.json()
+                content = result['choices'][0]['message']['content']
+                data = json.loads(content)
+                
+                return {
+                    "sentiment": data.get("sentiment", "Neutral 😐"),
+                    "confidence": float(data.get("confidence", 0.8)),
+                    "raw_label": data.get("sentiment", "Neutral")
+                }
         except Exception as e:
-            print(f"Analysis error: {e}")
-            return {"sentiment": "Neutral 😐", "confidence": 0.0, "raw_label": "error"}
+            print(f"OpenRouter analysis error: {e}")
+            
+        return self._fallback_analyze(text)
+
+    def _fallback_analyze(self, text: str):
+        # Basic rule-based fallback if API fails
+        text_lower = text.lower()
+        positive_words = ['happy', 'good', 'great', 'excellent', 'खुश', 'अच्छा', 'సంతోషం', 'మంచి']
+        negative_words = ['sad', 'bad', 'terrible', 'depressed', 'दुखी', 'खराब', 'బాధ', 'చెడ్డ']
+        
+        pos_count = sum(1 for w in positive_words if w in text_lower)
+        neg_count = sum(1 for w in negative_words if w in text_lower)
+        
+        if pos_count > neg_count:
+            return {"sentiment": "Positive 😊", "confidence": 0.8, "raw_label": "positive"}
+        elif neg_count > pos_count:
+            return {"sentiment": "Negative 😔", "confidence": 0.8, "raw_label": "negative"}
+        
+        return {"sentiment": "Neutral 😐", "confidence": 0.5, "raw_label": "neutral"}
+
 
 indic_nlp = IndicNLPService()
 
@@ -69,21 +79,23 @@ def analyze_indic_health_text(text: str):
     sentiment_data = indic_nlp.analyze_text(text)
     
     advice = []
-    if sentiment_data["sentiment"] == "Negative 😔":
+    if "Negative" in sentiment_data["sentiment"]:
         advice.append("Detected low mood. Take a moment to relax or walk outside.")
-    elif sentiment_data["sentiment"] == "Positive 😊":
+    elif "Positive" in sentiment_data["sentiment"]:
         advice.append("Great energy! Your journal reflects progress.")
+    else:
+        advice.append("A balanced day. Keep maintaining your routines.")
     
     text_lower = text.lower()
     
-    # Enhanced keywords for symptoms in TE and HI
+    # Enhanced keywords for symptoms in TE, HI, EN
     health_keywords = {
-        "headache": ["headache", "सरदर्द", "తలనొప్పి", "pain in head"],
+        "headache": ["headache", "सरदर्द", "तలనొప్పి", "pain in head"],
         "fever": ["fever", "बुखार", "జ్వరం", "high temp"],
         "pain": ["pain", "दर्द", "నొప్పి", "అలసట"],
-        "tired": ["tired", "थका", "అలసట", "weak"],
-        "stress": ["stress", "तनाव", "ఒత్తిడి", "tension"],
-        "sleep": ["sleep", "नींद", "నిద్ర", "insomnia"]
+        "tired": ["tired", "थका", "అలసట", "weak", "exhausted"],
+        "stress": ["stress", "तनाव", "ఒత్తిడి", "tension", "anxious"],
+        "sleep": ["sleep", "नींद", "నిద్ర", "insomnia", "awake"]
     }
     
     detected_health = []
@@ -94,9 +106,13 @@ def analyze_indic_health_text(text: str):
     if detected_health:
         advice.append(f"Noticed: {', '.join(detected_health)}. Focus on self-care.")
 
+    score = 0
+    if "Positive" in sentiment_data["sentiment"]: score = 1
+    elif "Negative" in sentiment_data["sentiment"]: score = -1
+
     return {
         "mood": sentiment_data["sentiment"],
-        "mood_score": 1 if sentiment_data["sentiment"] == "Positive 😊" else (-1 if sentiment_data["sentiment"] == "Negative 😔" else 0),
+        "mood_score": score,
         "advice": advice,
         "language_detected": "Multilingual (EN/HI/TE)",
         "confidence": sentiment_data["confidence"]
