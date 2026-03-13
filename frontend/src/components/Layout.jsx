@@ -1,17 +1,9 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { Heart, LayoutDashboard, BarChart3, History, Settings, LogOut, Brain } from 'lucide-react'
-import { useAuth } from '../App'
+import { NavLink, Outlet } from 'react-router-dom'
+import { Heart, LayoutDashboard, BarChart3, History, Settings, Brain } from 'lucide-react'
 import { useLanguage } from '../context/LanguageContext'
 
 export default function Layout() {
-  const { logout } = useAuth()
-  const navigate = useNavigate()
   const { t } = useLanguage()
-
-  const handleLogout = () => {
-    logout()
-    navigate('/login')
-  }
 
   const navItems = [
     { to: '/', icon: LayoutDashboard, label: t.nav.dashboard },
@@ -51,13 +43,6 @@ export default function Layout() {
                   </NavLink>
                 ))}
               </div>
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-              >
-                <LogOut className="h-4 w-4" />
-                <span className="hidden sm:inline">{t.nav.logout}</span>
-              </button>
             </div>
           </div>
         </div>

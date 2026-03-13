@@ -5,8 +5,7 @@ export const translations = {
             analytics: 'Analytics',
             history: 'History',
             journal: 'Journal',
-            settings: 'Settings',
-            logout: 'Logout'
+            settings: 'Settings'
         },
         dashboard: {
             welcome: 'Welcome back',
@@ -96,8 +95,7 @@ export const translations = {
             analytics: 'एनालिटिक्स',
             history: 'इतिहास',
             journal: 'जर्नल',
-            settings: 'सेटिंग्स',
-            logout: 'लॉगआउट'
+            settings: 'सेटिंग्स'
         },
         dashboard: {
             welcome: 'वापसी पर स्वागत है',
@@ -187,8 +185,7 @@ export const translations = {
             analytics: 'అనలిటిక్స్',
             history: 'చరిత్ర',
             journal: 'జర్నల్',
-            settings: 'సెట్టింగ్‌లు',
-            logout: 'లాగ్ అవుట్'
+            settings: 'సెట్టింగ్‌లు'
         },
         dashboard: {
             welcome: 'తిరిగి స్వాగతం',

@@ -6,9 +6,7 @@ const LanguageContext = createContext(null)
 export const useLanguage = () => useContext(LanguageContext)
 
 export const LanguageProvider = ({ children }) => {
-    const [language, setLanguage] = useState(() => {
-        return localStorage.getItem('app_language') || null
-    })
+    const [language, setLanguage] = useState(null)
 
     const t = translations[language || 'en']
 
