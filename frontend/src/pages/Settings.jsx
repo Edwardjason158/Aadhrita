@@ -56,24 +56,6 @@ export default function Settings() {
       </div>
 
       <div className="bg-white rounded-xl border border-slate-200 p-6">
-        <h2 className="text-lg font-semibold text-slate-800 mb-4">{t.settings.account}</h2>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between py-3 border-b border-slate-100">
-            <div>
-              <p className="font-medium text-slate-700">{t.settings.name}</p>
-              <p className="text-sm text-slate-500">{user?.name || 'Not set'}</p>
-            </div>
-          </div>
-          <div className="flex items-center justify-between py-3 border-b border-slate-100">
-            <div>
-              <p className="font-medium text-slate-700">{t.settings.email}</p>
-              <p className="text-sm text-slate-500">{user?.email}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-xl border border-slate-200 p-6">
         <h2 className="text-lg font-semibold text-slate-800 mb-4">{t.settings.googleFit}</h2>
         <div className="flex items-center justify-between">
           <div>
@@ -102,55 +84,6 @@ export default function Settings() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200 p-6">
-        <h2 className="text-lg font-semibold text-slate-800 mb-4">{t.settings.notifications}</h2>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium text-slate-700">{t.settings.reminders}</p>
-              <p className="text-sm text-slate-500">{t.settings.remindersDesc}</p>
-            </div>
-            <button className="w-12 h-6 bg-primary-600 rounded-full relative">
-              <span className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full transition-all"></span>
-            </button>
-          </div>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium text-slate-700">{t.settings.insights}</p>
-              <p className="text-sm text-slate-500">{t.settings.insightsDesc}</p>
-            </div>
-            <button className="w-12 h-6 bg-slate-200 rounded-full relative">
-              <span className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-all"></span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-xl border border-slate-200 p-6">
-        <h2 className="text-lg font-semibold text-slate-800 mb-4">{t.settings.goals}</h2>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">{t.settings.stepGoal}</label>
-            <input
-              type="number"
-              defaultValue={10000}
-              className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">{t.settings.sleepGoal}</label>
-            <input
-              type="number"
-              step="0.5"
-              defaultValue={8}
-              className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary-500"
-            />
-          </div>
-          <button className="px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700">
-            {t.settings.save}
-          </button>
-        </div>
-      </div>
     </div>
   )
 }
