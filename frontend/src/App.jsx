@@ -5,6 +5,7 @@ import Analytics from './pages/Analytics'
 import History from './pages/History'
 import Settings from './pages/Settings'
 import Layout from './components/Layout'
+import Chatbot from './components/Chatbot'
 import { LanguageProvider, useLanguage } from './context/LanguageContext'
 import LanguageSelector from './components/LanguageSelector'
 
@@ -51,6 +52,7 @@ function AppContent() {
         </Route>
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
+      {user && <Chatbot />}
     </Router>
   )
 }

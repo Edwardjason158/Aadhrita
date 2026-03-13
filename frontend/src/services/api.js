@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const API_URL = 'https://wellness23.onrender.com'
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 const api = axios.create({
   baseURL: API_URL,
   headers: {
@@ -110,6 +110,21 @@ export const analyticsAPI = {
 export const nlpAPI = {
   analyzeJournal: async (text) => {
     const response = await api.post('/nlp/analyze', { text })
+    return response.data
+  }
+}
+
+export const chatAPI = {
+  sendMessage: async (userId, message, language = 'en') => {
+    const response = await api.post('/chatbot/chat', { user_id: userId, message, language })
+    return response.data
+  },
+  getHistory: async (userId) => {
+    const response = await api.get(`/chatbot/history/${userId}`)
+    return response.data
+  },
+  clearHistory: async (userId) => {
+    const response = await api.delete(`/chatbot/history/${userId}`)
     return response.data
   }
 }
