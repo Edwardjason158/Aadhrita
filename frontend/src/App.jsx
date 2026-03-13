@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
-import { useState, createContext, useContext } from 'react'
+import { useState, useEffect, createContext, useContext } from 'react'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Analytics from './pages/Analytics'
@@ -55,6 +55,24 @@ function App() {
     setUser(null)
     localStorage.removeItem('user')
   }
+
+  // Auto-login as demo user if no user exists
+  useEffect(() => {
+    if (!user) {
+      const performAutoLogin = async () => {
+        try {
+          const { authAPI } = await import('./services/api')
+          const demoUser = await authAPI.demoLogin()
+          login(demoUser)
+        } catch (error) {
+          console.error('Auto demo login failed:', error)
+          // Temporary fallback structure if backend is slow/offline
+          login({ id: 1, name: 'Demo User', email: 'demo@example.com' })
+        }
+      }
+      performAutoLogin()
+    }
+  }, [user])
 
   return (
     <AuthContext.Provider value={{ user, login, logout }}>

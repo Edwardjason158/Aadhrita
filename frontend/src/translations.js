@@ -62,7 +62,7 @@ export const translations = {
         login: {
             title: 'Wellness',
             subtitle: 'Track Your Health Journey',
-            desc: 'Connect with Google Fit or add data manually to get personalized AI insights',
+            desc: 'Get personalized AI insights and health alerts for your wellness journey',
             google: 'Sign in with Google',
             demo: 'Try Demo Mode',
             footer: 'By signing in, you agree to our Terms of Service and Privacy Policy',
@@ -153,7 +153,7 @@ export const translations = {
         login: {
             title: 'वेलनेस',
             subtitle: 'अपनी स्वास्थ्य यात्रा को ट्रैक करें',
-            desc: 'Google Fit से जुड़ें या व्यक्तिगत AI अंतर्दृष्टि प्राप्त करने के लिए मैन्युअल रूप से डेटा जोड़ें',
+            desc: 'अपनी स्वास्थ्य यात्रा के लिए व्यक्तिगत AI अंतर्दृष्टि और स्वास्थ्य अलर्ट प्राप्त करें',
             google: 'Google के साथ साइन इन करें',
             demo: 'डेमो मोड आज़माएं',
             footer: 'साइन इन करके, आप हमारी सेवा की शर्तों और गोपनीयता नीति से सहमत होते हैं',
@@ -244,7 +244,7 @@ export const translations = {
         login: {
             title: 'వెల్‌నెస్',
             subtitle: 'మీ ఆరోగ్య ప్రయాణాన్ని ట్రాక్ చేయండి',
-            desc: 'వ్యక్తిగతీకరించిన AI అంతర్తృష్టులను పొందడానికి Google Fitతో కనెక్ట్ అవ్వండి లేదా మాన్యువల్‌గా డేటాను జోడించండి',
+            desc: 'మీ ఆరోగ్య ప్రయాణం కోసం వ్యక్తిగతీకరించిన AI అంతర్దృష్టులు మరియు ఆరోగ్య హెచ్చరికలను పొందండి',
             google: 'Googleతో సైన్ ఇన్ చేయండి',
             demo: 'డెమో మోడ్‌ను ప్రయత్నించండి',
             footer: 'సైన్ ఇన్ చేయడం ద్వారా, మీరు మా సేవా నిబంధనలు మరియు గోప్యతా విధానానికి అంగీకరిస్తున్నారు',
