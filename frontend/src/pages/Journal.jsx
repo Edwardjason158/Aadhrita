@@ -139,39 +139,19 @@ export default function Journal() {
                             </div>
                         </div>
 
-                        <div className="space-y-6">
-                            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-                                <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Language Capabilities</h4>
-                                <div className="space-y-3">
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-sm font-bold text-slate-600">Telugu Support</span>
-                                        <div className="h-2 w-32 bg-slate-100 rounded-full overflow-hidden">
-                                            <div className="h-full bg-emerald-500 w-full"></div>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-sm font-bold text-slate-600">Hindi Support</span>
-                                        <div className="h-2 w-32 bg-slate-100 rounded-full overflow-hidden">
-                                            <div className="h-full bg-orange-500 w-full"></div>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-sm font-bold text-slate-600">English Support</span>
-                                        <div className="h-2 w-32 bg-slate-100 rounded-full overflow-hidden">
-                                            <div className="h-full bg-blue-500 w-full"></div>
-                                        </div>
-                                    </div>
+                        <div className="space-y-6 flex flex-col h-full">
+                            <div className="bg-slate-800 rounded-2xl border border-slate-700 p-6 shadow-xl flex-1 flex flex-col">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="font-mono text-sm font-bold text-slate-200 flex items-center gap-2">
+                                        <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                                        RAW_AI_OUTPUT.txt
+                                    </h3>
                                 </div>
-                            </div>
-
-                            <div className="bg-indigo-600 rounded-2xl p-6 text-white shadow-lg overflow-hidden relative">
-                                <div className="relative z-10">
-                                    <h4 className="font-bold mb-1">IndicBERT v2</h4>
-                                    <p className="text-xs text-indigo-100 opacity-80 leading-relaxed">
-                                        Using state-of-the-art multilingual models for superior understanding of Indian context.
-                                    </p>
+                                <div className="bg-slate-900 rounded-xl p-4 overflow-y-auto flex-1 custom-scrollbar border border-slate-700">
+                                    <pre className="text-xs text-emerald-400 font-mono whitespace-pre-wrap leading-relaxed">
+                                        {result.formatted_text || "Waiting for structured data..."}
+                                    </pre>
                                 </div>
-                                <Brain className="absolute -bottom-6 -right-6 h-32 w-32 text-white opacity-10 rotate-12" />
                             </div>
                         </div>
                     </div>
