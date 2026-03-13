@@ -84,7 +84,7 @@ export default function Dashboard() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">{t.dashboard.welcome}, {user?.name || 'User'}!</h1>
+          <h1 className="text-2xl font-bold text-slate-800">{t.dashboard.welcome}!</h1>
           <p className="text-slate-500">{t.dashboard.overview}</p>
         </div>
         <div className="flex items-center gap-2">
