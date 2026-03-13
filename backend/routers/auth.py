@@ -142,7 +142,7 @@ async def demo_login(db: Session = Depends(get_db)):
     
     if not user:
         user = User(
-            name="Demo User",
+            name=" User",
             email=email,
             last_login=datetime.utcnow()
         )
@@ -152,7 +152,16 @@ async def demo_login(db: Session = Depends(get_db)):
     else:
         user.last_login = datetime.utcnow()
         db.commit()
-        db.refresh(user)
+    
+    # ALWAYS clear demo user's data on login so dashboard starts empty!
+    from backend.models.models import HealthRecord, Insight, Pattern, WellnessScore
+    db.query(HealthRecord).filter(HealthRecord.user_id == user.id).delete()
+    db.query(Insight).filter(Insight.user_id == user.id).delete()
+    db.query(Pattern).filter(Pattern.user_id == user.id).delete()
+    db.query(WellnessScore).filter(WellnessScore.user_id == user.id).delete()
+    db.commit()
+    
+    db.refresh(user)
         
     return user
 
