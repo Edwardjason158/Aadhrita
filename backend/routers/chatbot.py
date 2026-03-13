@@ -61,12 +61,77 @@ def chatbot_node(state: State):
     }
     target_lang = lang_map.get(state.get("language", "en"), "English")
     
-    sys_msg = SystemMessage(
-        content=f"You are a helpful Wellbeing and Health Assistant for the Wellness Dashboard app. "
-        f"You MUST communicate and respond in {target_lang}. "
-        f"If the user asks about health topics or recent research, use your search tool. "
-        f"Be very concise, empathetic, and informative."
-    )
+    prompt_text = f"""You are an intelligent AI Wellness Assistant designed to help users understand and improve their health habits.
+
+You support multiple languages:
+- English
+- Telugu
+- Hindi
+
+Always respond in the SAME language used by the user. 
+If the language is unclear, reply in English. You must currently respond in: {target_lang}.
+
+Your role is to analyze the user's health-related messages and provide helpful wellness guidance.
+
+The user's message may contain information related to:
+- sleep hours
+- heart rate (BPM)
+- stress level
+- screen time
+- physical activity or steps
+- headaches or other symptoms
+- mood or daily habits
+
+You also maintain MEMORY of previous user information to understand patterns over time.
+
+Memory Rules:
+- Remember important health data shared by the user (sleep hours, screen time, stress, etc.)
+- Use previous information to detect unhealthy patterns
+- If the user repeatedly reports unhealthy habits, gently mention the pattern
+
+Example:
+"If you mentioned earlier that your screen time is very high, it may be contributing to your headaches."
+
+Analysis Steps:
+1. Detect the wellness topic.
+2. Determine if the habit or data is healthy or unhealthy.
+3. Provide a simple explanation.
+4. Suggest practical improvements.
+
+Response Format:
+
+Health Insight:
+[Explain what the user's data or symptom means in simple language.]
+
+Suggestion:
+[Give helpful advice or actions the user can take.]
+
+Wellness Tips:
+Provide 1-3 small healthy habits such as:
+- yoga or breathing exercises for stress
+- drinking enough water
+- reducing screen time
+- improving sleep schedule
+- stretching or walking
+- meditation
+- eye relaxation (20-20-20 rule)
+
+Communication Style:
+- Be supportive and friendly
+- Use simple sentences
+- Avoid medical diagnosis
+- Do not repeat the user's message
+- Provide short and clear answers
+
+If the user reports symptoms like headache, stress, or poor sleep, suggest natural wellness practices such as:
+- yoga
+- meditation
+- deep breathing
+- short walks
+- proper hydration
+- better sleep routine
+"""
+    sys_msg = SystemMessage(content=prompt_text)
     
     msgs = state["messages"]
     if not msgs or not getattr(msgs[0], "type", "") == "system":
@@ -103,44 +168,135 @@ async def chat_endpoint(request: ChatRequest):
 
     # Dummy check for missing local configuration
     if not OPENROUTER_API_KEY or "your_" in OPENROUTER_API_KEY or OPENROUTER_API_KEY == "test":
-        import requests
-        
         # Get existing state from LangGraph
         state = app_graph.get_state(config)
         existing_messages = []
         if state and state.values and "messages" in state.values:
             existing_messages = list(state.values["messages"])
-        
-        user_msg = request.message.lower()
-        reply = ""
-        
-        # Determine dynamic mock response
-        if "sleep" in user_msg:
-            reply = "I noticed you mentioned sleep! Getting 7-8 hours is essential for recovery. Have you been tracking your sleep schedule? (Mock Mode)"
-        elif "stress" in user_msg or "anxious" in user_msg:
-            reply = "Stress and anxiety can be tough. Remember to take deep breaths, step away from screens, or do a light walk. (Mock Mode)"
-        elif "food" in user_msg or "diet" in user_msg or "water" in user_msg:
-            reply = "A balanced diet and proper hydration fuel your body! Make sure to drink plenty of water today. (Mock Mode)"
-        elif "history" in user_msg or "remember" in user_msg:
-            reply = f"I remember our chat history! We have {len(existing_messages)} previous messages in this session. (Mock Mode)"
-        elif "?" in user_msg or "what is" in user_msg:
-            words = user_msg.replace("?", "").split()
-            topic = [w for w in words if len(w) > 3][-1] if any(len(w)>3 for w in words) else words[-1]
-            try:
-                # Add proper capitalization and User-Agent 
-                topic_capitalized = topic.capitalize()
-                url = "https://en.wikipedia.org/api/rest_v1/page/summary/" + topic_capitalized
-                headers = {'User-Agent': 'WellnessDashboardBot/1.0'}
-                resp = requests.get(url, headers=headers, timeout=3)
-                if resp.status_code == 200:
-                    data = resp.json().get("extract", "")
-                    if data:
-                        reply = f"Here is some information about {topic}: {data} (Mock Mode)"
-            except:
-                pass
+            
+        try:
+            from g4f.client import AsyncClient as G4FClient
+            import asyncio
+            client = G4FClient()
+            
+            lang_map = {"en": "English", "hi": "Hindi", "te": "Telugu"}
+            target_lang = lang_map.get(request.language, "English")
+            prompt_text = f"""You are an intelligent AI Wellness Assistant designed to help users understand and improve their health habits.
+
+You support multiple languages:
+- English
+- Telugu
+- Hindi
+
+Always respond in the SAME language used by the user. 
+If the language is unclear, reply in English. You must currently respond in: {target_lang}.
+
+Your role is to analyze the user's health-related messages and provide helpful wellness guidance.
+
+The user's message may contain information related to:
+- sleep hours
+- heart rate (BPM)
+- stress level
+- screen time
+- physical activity or steps
+- headaches or other symptoms
+- mood or daily habits
+
+You also maintain MEMORY of previous user information to understand patterns over time.
+
+Memory Rules:
+- Remember important health data shared by the user (sleep hours, screen time, stress, etc.)
+- Use previous information to detect unhealthy patterns
+- If the user repeatedly reports unhealthy habits, gently mention the pattern
+
+Example:
+"If you mentioned earlier that your screen time is very high, it may be contributing to your headaches."
+
+Analysis Steps:
+1. Detect the wellness topic.
+2. Determine if the habit or data is healthy or unhealthy.
+3. Provide a simple explanation.
+4. Suggest practical improvements.
+
+Response Format:
+
+Health Insight:
+[Explain what the user's data or symptom means in simple language.]
+
+Suggestion:
+[Give helpful advice or actions the user can take.]
+
+Wellness Tips:
+Provide 1-3 small healthy habits such as:
+- yoga or breathing exercises for stress
+- drinking enough water
+- reducing screen time
+- improving sleep schedule
+- stretching or walking
+- meditation
+- eye relaxation (20-20-20 rule)
+
+Communication Style:
+- Be supportive and friendly
+- Use simple sentences
+- Avoid medical diagnosis
+- Do not repeat the user's message
+- Provide short and clear answers
+
+If the user reports symptoms like headache, stress, or poor sleep, suggest natural wellness practices such as:
+- yoga
+- meditation
+- deep breathing
+- short walks
+- proper hydration
+- better sleep routine
+"""
+            history = [{"role": "system", "content": prompt_text}]
+            
+            # append history up to 6 messages
+            for em in existing_messages[-6:]:
+                role = "user" if isinstance(em, HumanMessage) else "assistant"
+                history.append({"role": role, "content": em.content})
                 
-        if not reply:
-            reply = f"I hear you saying: '{request.message}'. As your Wellness Assistant, I'm analyzing that to support you! (Mock Mode)"
+            history.append({"role": "user", "content": request.message})
+            async def fetch_g4f():
+                return await client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=history
+                )
+            response = await asyncio.wait_for(fetch_g4f(), timeout=12.0)
+            reply_raw = response.choices[0].message.content
+            # strip out potential provider ads
+            reply = reply_raw.split("http")[0].split("Need proxies")[0].strip()
+        except Exception as e:
+            print(f"G4F fallback failed: {e}")
+            import requests
+            user_msg = request.message.lower()
+            reply = ""
+            if "sleep" in user_msg:
+                reply = "I noticed you mentioned sleep. Getting 7-8 hours is essential for recovery. Have you been tracking your sleep schedule?\n\nSuggestion:\nTry to go to bed at the same time every day.\n\nWellness Tips:\n- Avoid screens 1 hour before bed\n- Keep your room cool and dark"
+            elif "stress" in user_msg or "anxious" in user_msg or "headache" in user_msg:
+                reply = "Stress and headaches can be tough. Remember to take deep breaths, step away from screens, or do a light walk.\n\nSuggestion:\nTake a short break to relax your eyes and mind.\n\nWellness Tips:\n- meditation\n- deep breathing\n- eye relaxation (20-20-20 rule)"
+            elif "food" in user_msg or "diet" in user_msg or "water" in user_msg:
+                reply = "A balanced diet and proper hydration fuel your body! Make sure to drink plenty of water today.\n\nSuggestion:\nKeep a water bottle nearby.\n\nWellness Tips:\n- proper hydration\n- eating more greens"
+            elif "history" in user_msg or "remember" in user_msg:
+                reply = f"I remember our chat history! We have {len(existing_messages)} previous messages in this session.\n\nSuggestion:\nYou can always refer back to our advice.\n\nWellness Tips:\n- continue tracking your habits"
+            elif "?" in user_msg or "what is" in user_msg:
+                words = user_msg.replace("?", "").split()
+                topic = [w for w in words if len(w) > 3][-1] if any(len(w)>3 for w in words) else words[-1]
+                try:
+                    topic_capitalized = topic.capitalize()
+                    url = "https://en.wikipedia.org/api/rest_v1/page/summary/" + topic_capitalized
+                    headers = {'User-Agent': 'WellnessDashboardBot/1.0'}
+                    resp = requests.get(url, headers=headers, timeout=3)
+                    if resp.status_code == 200:
+                        data = resp.json().get("extract", "")
+                        if data:
+                            reply = f"Here is some information about {topic}: {data}\n\nSuggestion:\nConsider learning more about healthy ways to manage this.\n\nWellness Tips:\n- healthy routines"
+                except:
+                    pass
+            if not reply:
+                reply = f"I hear you saying: '{request.message}'. As your Wellness Assistant, I'm here to support you! How does that make you feel?\n\nSuggestion:\nKeep observing your habits.\n\nWellness Tips:\n- write in your journal"
             
         print(f"Mocking dynamic response. Missing valid OPENROUTER_API_KEY.")
         
