@@ -9,7 +9,6 @@ export default function Layout() {
     { to: '/', icon: LayoutDashboard, label: t.nav.dashboard },
     { to: '/analytics', icon: BarChart3, label: t.nav.analytics },
     { to: '/history', icon: History, label: t.nav.history },
-    { to: '/journal', icon: Brain, label: t.nav.journal },
     { to: '/settings', icon: Settings, label: t.nav.settings },
   ]
 
